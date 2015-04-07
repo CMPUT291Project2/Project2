@@ -19,7 +19,7 @@ public class MainTest {
 		fail("Not yet implemented");
 	}
 
-	@Test
+//	@Test
 	public void testSearchByKeyBTree() throws DatabaseException, IOException {
 		Main main = new Main();
 
@@ -30,7 +30,7 @@ public class MainTest {
 		assertTrue(success);
 	}
 
-	@Test
+//	@Test
 	public void testSearchByKeyHash() throws DatabaseException, IOException {
 		Main main = new Main();
 
@@ -75,7 +75,7 @@ public class MainTest {
 		assertTrue(count < 20 | count == 20);
 	}
 	
-//	@Test
+	@Test
 	public void testSearchByKeyRangeHash() throws DatabaseException, IOException {
 
 		Main main = new Main();
