@@ -129,9 +129,53 @@ public class Main {
 
 	private static void searchByKeyRangeIndexFile()
 	{
+		/*
+		boolean success = true;
+		DatabaseEntry key = new DatabaseEntry();
+		DatabaseEntry data = new DatabaseEntry();
 
-		// TODO Auto-generated method stub
+		// Search for Keyword
+		String keyword =  System.console().readLine("Enter Key value to be searched: ");
+		System.console().printf("\n");
+		// String keyword = "upifbjzvdomrijhtvnmwyymfhglzhcsyxttdgjsqrzblznmireugvdamjcsvugqeyy";
 
+		key.setData(keyword.getBytes());
+		key.setSize(keyword.length());
+		
+		// Start Timer
+		long startTime = System.currentTimeMillis();
+
+		OperationStatus op_status = my_table.get(null, key, data, LockMode.DEFAULT);
+		System.out.println("Search Status: " + op_status.toString());
+
+
+		op_status = my_table.get(null, key, data, LockMode.DEFAULT);
+
+		int counter = 0;
+		// Enters the matched key/data pair to an ArrayList to prepare for printing
+		// Also return a boolean for unit testing
+		ArrayList<String> keyDataList = new ArrayList<String>();
+		
+		if (op_status == OperationStatus.SUCCESS) {
+			String keyString = new String(key.getData());
+			String dataString = new String(data.getData());
+			// System.out.println("Key | Data : " + keyString + " | " + dataString + "");
+			keyDataList.add(keyString);
+			keyDataList.add(dataString);
+			counter++;
+			success = true;
+		} else {
+			success = false;
+		}
+		
+		// End Timer
+		long endTime = System.currentTimeMillis();
+		long elapsedTime = (endTime - startTime);
+		System.out.println("Elapsed Time: " + elapsedTime + " ms");
+		printResult(file, keyDataList, elapsedTime);
+		System.out.println("Total Records Retrieved: " + counter);
+		return success;
+*/
 	}
 
 	private static void searchByDataIndexFile() throws DatabaseException, IOException
@@ -222,7 +266,9 @@ public class Main {
 				ddbt = new DatabaseEntry(s.getBytes());
 				ddbt.setSize(s.length()); 
 
-				/* to insert the key/data pair into the database 
+				/* to insert the key/data pair 
+
+HEADinto the database 
 				 * if the key does not exist in the database already
 				 */
 				my_table.putNoOverwrite(null, kdbt, ddbt);
@@ -295,6 +341,10 @@ public class Main {
 		my_table.close();
 		/* to remove the table */
 		my_table.remove(DB_TABLE,null,null);
+		if(db_type_option.equals("indexfile")){
+			sec_table.close();
+			sec_table.remove(INV_TABLE, null, null);
+		}
 	}
 
 
@@ -345,7 +395,6 @@ public class Main {
 		printResult(file, keyDataList, elapsedTime);
 		System.out.println("Total Records Retrieved: " + counter);
 		return success;
-
 	}
 
 
