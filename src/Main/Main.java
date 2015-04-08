@@ -25,10 +25,9 @@ import com.sleepycat.db.OperationStatus;
 
 public class Main {
 
-	// TODO: Hash Range Search
 	// TODO: Finish Report
 	// TODO: Tabulate Results
-	
+
 	/**
 	 * @param args
 	 */
@@ -45,14 +44,9 @@ public class Main {
 	public static void main(String[] args) throws DatabaseException, IOException {
 		// Retrieve db type option
 		db_type_option = args[0];
-		
-		// Open answers file
-		file = new File("answers");
-		// If file doesnt exists, then create it
-		if(!file.exists()){
-			file.createNewFile();
-		}
-		
+
+		Main main = new Main();
+
 		while(shouldNotExit()) {
 			// Create Interface
 			try {
@@ -67,59 +61,66 @@ public class Main {
 				System.out.println("Invalid Input!\n");
 				continue;
 			}
-			performSelection(selection);
+			main.performSelection(selection);
+		}
+	}
+
+	public Main() throws IOException {
+		file = new File("answers");
+		// If file doesnt exists, then create it
+		if(!file.exists()){
+			file.createNewFile();
 		}
 	}
 
 	private static void performSelection(int selection) throws DatabaseException, IOException {
 		switch(selection) {
-		case 1:
-			System.out.println("Creating Database...");
-			createPopulateDB(db_type_option);
-			System.out.println("");
-			break;
-		case 2:
-			System.out.println("Retrieve Records with Given Key");
-			if (db_type_option.equals("indexfile")) {
-				searchByKeyIndexFile();
-			} else {
-				searchByKey();
-			}
-			break;
-		case 3:
-			System.out.println("Retrieve Records with Given Data");
-			if (db_type_option.equals("btree")) {
-				searchByDataBTree();
-			} else if (db_type_option.equals("hash")){
-				searchByDataHash();
-			} else {
-				// TODO INDEXFILE Data Value Search
-				searchByDataIndexFile();
-			}
-			break;
-		case 4:
-			System.out.println("Retrieve Records with Given Range of Keys");
-			if (db_type_option.equals("btree")) {
-				searchByKeyRangeBTree();
-				// TODO
-			} else if (db_type_option.equals("hash")){
-				searchByKeyRangeHash();
-			} else {
-				// TODO INDEXFILE Range Search
-				searchByKeyRangeIndexFile();
-			}
-			break;
-		case 5:
-			System.out.println("Destroying Database...");
-			destroyDB();
-			break;
-		case 6:
-			file.delete();
-			exit=true;
-			return;
-		default:
-			System.out.println("Invalid Selection\n");
-			return;
+			case 1:
+				System.out.println("Creating Database...");
+				createPopulateDB(db_type_option);
+				System.out.println("");
+				break;
+			case 2:
+				System.out.println("Retrieve Records with Given Key");
+				if (db_type_option.equals("indexfile")) {
+					searchByKeyIndexFile();
+				} else {
+					searchByKey();
+				}
+				break;
+			case 3:
+				System.out.println("Retrieve Records with Given Data");
+				if (db_type_option.equals("btree")) {
+					searchByDataBTree();
+				} else if (db_type_option.equals("hash")){
+					searchByDataHash();
+				} else {
+					// TODO INDEXFILE Data Value Search
+					searchByDataIndexFile();
+				}
+				break;
+			case 4:
+				System.out.println("Retrieve Records with Given Range of Keys");
+				if (db_type_option.equals("btree")) {
+					searchByKeyRangeBTree();
+					// TODO
+				} else if (db_type_option.equals("hash")){
+					searchByKeyRangeHash();
+				} else {
+					// TODO INDEXFILE Range Search
+					searchByKeyRangeIndexFile();
+				}
+				break;
+			case 5:
+				System.out.println("Destroying Database...");
+				destroyDB();
+				break;
+			case 6:
+				exit=true;
+				return;
+			default:
+				System.out.println("Invalid Selection\n");
+				return;
 		}
 
 	}
@@ -130,21 +131,17 @@ public class Main {
 	{
 
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	private static void searchByDataIndexFile() throws DatabaseException, IOException
 	{
-
 		searchByDataBTree();
-		
 	}
 
 	private static void searchByKeyIndexFile() throws DatabaseException, IOException
 	{
-
 		searchByKey();
-		
 	}
 
 	// Select 1: Create and Populate Database
@@ -300,7 +297,7 @@ public class Main {
 		my_table.remove(DB_TABLE,null,null);
 	}
 
-	
+
 	// Search the Database using a Key
 	public static boolean searchByKey() throws DatabaseException, IOException {
 		boolean success = true;
@@ -310,12 +307,14 @@ public class Main {
 		// Search for Keyword
 		String keyword =  System.console().readLine("Enter Key value to be searched: ");
 		System.console().printf("\n");
-//		String keyword = "upifbjzvdomrijhtvnmwyymfhglzhcsyxttdgjsqrzblznmireugvdamjcsvugqeyy";
+		// String keyword = "upifbjzvdomrijhtvnmwyymfhglzhcsyxttdgjsqrzblznmireugvdamjcsvugqeyy";
 
 		key.setData(keyword.getBytes());
 		key.setSize(keyword.length());
 		
+		// Start Timer
 		long startTime = System.currentTimeMillis();
+
 		OperationStatus op_status = my_table.get(null, key, data, LockMode.DEFAULT);
 		System.out.println("Search Status: " + op_status.toString());
 
@@ -326,10 +325,11 @@ public class Main {
 		// Enters the matched key/data pair to an ArrayList to prepare for printing
 		// Also return a boolean for unit testing
 		ArrayList<String> keyDataList = new ArrayList<String>();
+		
 		if (op_status == OperationStatus.SUCCESS) {
 			String keyString = new String(key.getData());
 			String dataString = new String(data.getData());
-			//System.out.println("Key | Data : " + keyString + " | " + dataString + "");
+			// System.out.println("Key | Data : " + keyString + " | " + dataString + "");
 			keyDataList.add(keyString);
 			keyDataList.add(dataString);
 			counter++;
@@ -337,8 +337,9 @@ public class Main {
 		} else {
 			success = false;
 		}
+		
+		// End Timer
 		long endTime = System.currentTimeMillis();
-		// Gathers the elapsed time it took to search for the key
 		long elapsedTime = (endTime - startTime);
 		System.out.println("Elapsed Time: " + elapsedTime + " ms");
 		printResult(file, keyDataList, elapsedTime);
@@ -348,7 +349,6 @@ public class Main {
 	}
 
 
-
 	public static void searchByDataBTree() throws DatabaseException, IOException {
 
 		DatabaseEntry key = new DatabaseEntry();
@@ -356,7 +356,9 @@ public class Main {
 
 		String dataword =  System.console().readLine("Enter Data value to be searched: ");
 		System.console().printf("\n");
-//		String dataword = "pmvndcccadcmvjijvcibttitcjvkrgtysvyrthbofxafnntddtgrehfudcyxybzlokplrturvzymryjshclxgryatxdotiainbpgzbynuyecxbqrvoq";
+		
+		// String dataword = "pmvndcccadcmvjijvcibttitcjvkrgtysvyrthbofxafnntddtgrehfudcyxybzlokplrturvzymryjshclxgryatxdotiainbpgzbynuyecxbqrvoq";
+		
 		DatabaseEntry givenData = new DatabaseEntry(dataword.getBytes());
 		givenData.setSize(dataword.length());
 
@@ -366,22 +368,24 @@ public class Main {
 
 		ArrayList<String> keyDataList = new ArrayList<String>();
 		int counter = 0;
-		
+
+		// Start Timer
 		long startTime = System.currentTimeMillis();
 
 		while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS)
 		{
 			String keyString = new String(key.getData());
 			String dataString = new String(data.getData());
-			//System.out.println("Key | Data : " + keyString + " | " + dataString + "");
 			if (givenData.equals(data)) {
+				// System.out.println("Key | Data : " + keyString + " | " + dataString + "");
 				keyDataList.add(keyString);
 				keyDataList.add(dataString);
 				counter++;
 			}
 		}
+		
+		// End Timer
 		long endTime = System.currentTimeMillis();
-		// Gathers the elapsed time it took to search for the data
 		long elapsedTime = (endTime - startTime);
 		System.out.println("Elapsed Time: " + elapsedTime + " ms");
 		printResult(file, keyDataList, elapsedTime);
@@ -395,7 +399,9 @@ public class Main {
 
 		String dataword =  System.console().readLine("Enter Data value to be searched: ");
 		System.console().printf("\n");
-//		String dataword = "pmvndcccadcmvjijvcibttitcjvkrgtysvyrthbofxafnntddtgrehfudcyxybzlokplrturvzymryjshclxgryatxdotiainbpgzbynuyecxbqrvoq";
+		
+		// String dataword = "pmvndcccadcmvjijvcibttitcjvkrgtysvyrthbofxafnntddtgrehfudcyxybzlokplrturvzymryjshclxgryatxdotiainbpgzbynuyecxbqrvoq";
+		
 		DatabaseEntry givenData = new DatabaseEntry(dataword.getBytes());
 
 		// Initialize cursor for table
@@ -404,76 +410,30 @@ public class Main {
 		ArrayList<String> keyDataList = new ArrayList<String>();
 		int counter = 0;
 
+		// Start Timer
 		long startTime = System.currentTimeMillis();
 
 		while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS)
 		{
 			String keyString = new String(key.getData());
 			String dataString = new String(data.getData());
-			System.out.println("Key | Data : " + keyString + " | " + dataString + "");
 			if (givenData.equals(data)) {
+				//System.out.println("Key | Data : " + keyString + " | " + dataString + "");
 				keyDataList.add(keyString);
 				keyDataList.add(dataString);
 				counter++;
 			}
 		}
+		
+		// End Timer
 		long endTime = System.currentTimeMillis();
-		// Gathers the elapsed time it took to search for the data
 		long elapsedTime = (endTime - startTime);
 		System.out.println("Elapsed Time: " + elapsedTime + " ms");
 		printResult(file, keyDataList, elapsedTime);
 		System.out.println("Total Records Retrieved: " + counter);
-		//System.out.println("Test Counter: " + testcounter);
 	}
 
-	public static ArrayList<String> getSortedKeys(Database my_table, String minKey, String maxKey) throws DatabaseException {
-		Cursor cursor = my_table.openCursor(null, null);
-		ArrayList<String> unsortedKeys = new ArrayList<String>();
-		DatabaseEntry key = new DatabaseEntry();
-		DatabaseEntry data = new DatabaseEntry();
-		while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS)
-		{
-			String keyString = new String(key.getData());
-			String dataString = new String(data.getData());
-			//System.out.println("Key | Data : " + keyString + " | " + dataString + "");
-			unsortedKeys.add(keyString);
-		}
-		
 
-		System.out.println();
-		
-		// Sort keys
-		Collections.sort(unsortedKeys);
-		ArrayList<String> rangeKeys = new ArrayList<String>();
-//		for(int i = 0; i < unsortedKeys.size(); i++) {
-//			if (unsortedKeys.get(i).equals(minKey)) {
-//				System.out.println("Found Minimum Key");
-//				rangeKeys.add(unsortedKeys.get(i));
-//				while(unsortedKeys.iterator().hasNext()) {
-//					String nextKey = unsortedKeys.iterator().next();
-//					rangeKeys.add(nextKey);
-//					if(nextKey.equals(maxKey)) {
-//						break;
-//					}
-//				}
-//				System.out.println("Broke out of while loop");
-//				break;
-//			}
-//		}
-//		System.out.println("Broke out of main for loop");
-		// Test Print sorted keys
-		Iterator<String> it = unsortedKeys.iterator();
-		while(it.hasNext()) {
-			String nextKey = it.next();
-			if (nextKey.equals("qvyzfdavdmyeiuwnopvxajtdeamlfrkvninschhewtshzqidlqhjreszdiixtyheqwebopdndjhkptfzmydtjmtpjgfgrsfpwngjcdolzfyclvrxmvdkaeqafyysdek")) {
-				System.out.println("Min Key Found!");
-				rangeKeys.add(nextKey);
-			}
-		}
-		return null;		
-	}
-	
-	// TODO
 	public static int searchByKeyRangeHash() throws DatabaseException, IOException {
 
 		DatabaseEntry minKey = new DatabaseEntry();
@@ -483,13 +443,13 @@ public class Main {
 
 		Cursor cursor = my_table.openCursor(null, null);
 
-//		String minKeyword =  System.console().readLine("Enter minimum key: ");
-//		System.console().printf("\n");
-//		String maxKeyword =  System.console().readLine("Enter maximum key: ");
-//		System.console().printf("\n");
-		
-		String minKeyword = "zydzqjcmmuklumwqehbphtpcubnoedzepzsgpivhlivbstrxyirjyfjmjbwkzaprlanyvvbtkztqmhdgjnudwnfaoivomxbzoajhmljejbxlwtqizppytbaqnhwiufs";
-		String maxKeyword = "zyhfkxxoyezbprhyvpqtuocjhxunskhioctskyaacafhxdarseypgbzdmxyehqkpnedxgtsditwndxsqdbiahzxwmdgvhofaavgmezeyqjszvskmgnyafqpzubqafso";
+		String minKeyword =  System.console().readLine("Enter minimum key: ");
+		System.console().printf("\n");
+		String maxKeyword =  System.console().readLine("Enter maximum key: ");
+		System.console().printf("\n");
+
+//		String minKeyword = "zydzqjcmmuklumwqehbphtpcubnoedzepzsgpivhlivbstrxyirjyfjmjbwkzaprlanyvvbtkztqmhdgjnudwnfaoivomxbzoajhmljejbxlwtqizppytbaqnhwiufs";
+//		String maxKeyword = "zyhfkxxoyezbprhyvpqtuocjhxunskhioctskyaacafhxdarseypgbzdmxyehqkpnedxgtsditwndxsqdbiahzxwmdgvhofaavgmezeyqjszvskmgnyafqpzubqafso";
 
 		minKey.setData(minKeyword.getBytes());
 		minKey.setSize(minKeyword.length());
@@ -497,59 +457,35 @@ public class Main {
 		maxKey.setData(maxKeyword.getBytes());
 		maxKey.setSize(maxKeyword.length());
 
-		// Testing if min key exists
-//		DatabaseEntry testKey = new DatabaseEntry();
-//		testKey.setData("zyeaxpostikcxszddhnvhukukvxphqnhwyibkdcuiopepojyhjrppijhvowfwpiptmoenhbhnjvjzcnzwshonijsxdpawmdcvgzxvzxprhqgrmqizppytbaqnhwiufs".getBytes());
-		
-		System.out.println("MIN HASH CODE: " + minKey.getData().hashCode());
-		System.out.println("MAX HASH CODE: " + maxKey.getData().hashCode());
-//		System.out.println("TEST HASH CODE: " + testKey.getData().hashCode());
 
-		long startTime = System.currentTimeMillis();
-		// Get Sorted Range Keys
-		ArrayList<String> sortedKeys = getSortedKeys(my_table, minKeyword, maxKeyword);
-		System.out.println("Printed Range Sorted Keys");
-		for (int i = 0; i < sortedKeys.size(); i++) {
-			System.out.println(sortedKeys.get(i));
-		}
 		ArrayList<String> keyDataList = new ArrayList<String>();
 		int counter = 0;
-//		if (cursor.getSearchKeyRange(minKey, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-//			String retKey = new String(minKey.getData());
-//			String retData = new String(data.getData());
-//			keyDataList.add(retKey);
-//			keyDataList.add(retData);
-//			System.out.println("Key | Data : " + retKey + " | " + retData + "");
-//			counter++;
-//			while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS)
-//			{
-//				String keyString = new String(key.getData());
-//				String dataString = new String(data.getData());
-//				keyDataList.add(keyString);
-//				keyDataList.add(dataString);
-//				System.out.println("Key | Data : " + keyString + " | " + dataString + "");
-//				counter++;
-//				if (new String(maxKey.getData()).equals(new String(key.getData()))) {
-//					System.out.println("Reached MAX KEY");
-//					break;
-//				}
-//				if (counter > 50) {
-//					System.out.println("OVERFLOW!");
-//					return counter;
-//				}
-//			}
-//		}
+
+		// Start Timer
+		long startTime = System.currentTimeMillis();
+
+		while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+			String keyString = new String(key.getData());
+			String dataString = new String(data.getData());
+
+			if (minKeyword.compareTo(keyString) < 0 & maxKeyword.compareTo(keyString) > 0) {
+				keyDataList.add(keyString);
+				keyDataList.add(dataString);
+				System.out.println("Key | Data : " + keyString + " | " + dataString + "");
+				counter++;
+			}	
+		}
+		
+		// End Timer
 		long endTime = System.currentTimeMillis();
-		// Gathers the elapsed time it took to search for the data
 		long elapsedTime = (endTime - startTime);
 		System.out.println("Elapsed Time: " + elapsedTime + " ms");
 		printResult(file, keyDataList, elapsedTime);
 		System.out.println("Total Records Retrieved: " + counter);
-		//System.out.println("Test Counter: " + testcounter);
 		return counter;
-
 	}
 
+	
 	public static int searchByKeyRangeBTree() throws DatabaseException, IOException {
 
 		DatabaseEntry minKey = new DatabaseEntry();
@@ -558,11 +494,12 @@ public class Main {
 		DatabaseEntry data = new DatabaseEntry();
 
 		Cursor cursor = my_table.openCursor(null, null);
-		
+
 		String minKeyword =  System.console().readLine("Enter minimum key: ");
 		System.console().printf("\n");
 		String maxKeyword =  System.console().readLine("Enter maximum key: ");
 		System.console().printf("\n");
+		
 //		String minKeyword = "zydzqjcmmuklumwqehbphtpcubnoedzepzsgpivhlivbstrxyirjyfjmjbwkzaprlanyvvbtkztqmhdgjnudwnfaoivomxbzoajhmljejbxlwtqizppytbaqnhwiufs";
 //		String maxKeyword = "zyhfkxxoyezbprhyvpqtuocjhxunskhioctskyaacafhxdarseypgbzdmxyehqkpnedxgtsditwndxsqdbiahzxwmdgvhofaavgmezeyqjszvskmgnyafqpzubqafso";
 
@@ -574,9 +511,10 @@ public class Main {
 
 		ArrayList<String> keyDataList = new ArrayList<String>();
 		int counter = 0;
-		
+
+		// Start Timer
 		long startTime = System.currentTimeMillis();
-		
+
 		if (cursor.getSearchKeyRange(minKey, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
 			String retKey = new String(minKey.getData());
 			String retData = new String(data.getData());
@@ -596,23 +534,23 @@ public class Main {
 					System.out.println("Reached MAX KEY");
 					break;
 				}
-				if (counter > 50) {
+				if (counter > NO_RECORDS) {
 					System.out.println("OVERFLOW!");
 					return counter;
 				}
 			}
 		}
+		
+		// End Timer
 		long endTime = System.currentTimeMillis();
-		// Gathers the elapsed time it took to search for the data
 		long elapsedTime = (endTime - startTime);
 		System.out.println("Elapsed Time: " + elapsedTime + " ms");
 		printResult(file, keyDataList, elapsedTime);
 		System.out.println("Total Records Retrieved: " + counter);
 		return counter;
-
 	}
 
-	
+
 	public static void printResult(File file, ArrayList<String> keyDataList, long elapsedTime) throws IOException {
 		FileWriter fw = new FileWriter(file.getName(),true);
 		BufferedWriter bw = new BufferedWriter(fw);
@@ -630,57 +568,10 @@ public class Main {
 			bw.newLine();
 		}
 		bw.close();
-
-		
 	}
-	
-	
 
-
+	
 	private static boolean shouldNotExit() {
 		return !exit;
 	}
-
-	// Search Database by given Data (Deprecated)
-	public static void searchByData() throws DatabaseException, IOException {
-		long startTime = System.currentTimeMillis();
-		DatabaseEntry key = new DatabaseEntry();
-		DatabaseEntry data = new DatabaseEntry();
-
-		// Initialize cursor for table
-		Cursor cursor = my_table.openCursor(null, null);
-
-		// Dataword to be searched
-		String dataword = "bbmnfgntfghyxvcqyxfaquptpsjfbkxhbmieryrldlshglyocdrcvusmqmpcchkzoidslxqblghkyonajugpujoijhsupmo";
-
-		data.setData(dataword.getBytes());
-		data.setSize(dataword.length());
-
-		int counter = 0;
-		ArrayList<String> keyDataList = new ArrayList<String>();
-
-		// Iterate over the entire database until all matches are found
-		// It is possible for the database to have duplicate data values
-		// Therefore, if dataword is found, store key/data pair into ArrayList and increment counter
-		int testcounter = 0;
-		while(cursor.getNext(key, data, LockMode.DEFAULT)==OperationStatus.SUCCESS) {
-			String keyString = new String(key.getData());
-			String dataString = new String(data.getData());
-			System.out.println("Key | Data : " + keyString + " | " + dataString + "");
-			if (dataString.equals(dataword)) {
-				keyDataList.add(keyString);
-				keyDataList.add(dataString);
-				counter++;
-			}
-			testcounter++;
-
-		}
-		long endTime = System.currentTimeMillis();
-		// Gathers the elapsed time it took to search for the data
-		long elapsedTime = (endTime - startTime);
-		System.out.println("Elapsed Time: " + elapsedTime + " ms");
-		System.out.println("Total Count for Search By Data: " + counter);
-		System.out.println("Test Counter: " + testcounter);
-	}
-
 }
