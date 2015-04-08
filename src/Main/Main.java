@@ -33,9 +33,11 @@ public class Main {
 	 * @param args
 	 */
 	private static final String DB_TABLE = "tmp/user_db/my_table";
+	private static final String INV_TABLE = "tmp/user_db/inv_table";
 	private static final int NO_RECORDS = 100000;
 	private static String db_type_option;
 	private static Database my_table;
+	private static Database sec_table;
 	private static boolean exit = false;
 	private static int selection;
 	private static File file;
@@ -131,17 +133,17 @@ public class Main {
 		
 	}
 
-	private static void searchByDataIndexFile()
+	private static void searchByDataIndexFile() throws DatabaseException, IOException
 	{
 
-		// TODO Auto-generated method stub
+		searchByDataBTree();
 		
 	}
 
-	private static void searchByKeyIndexFile()
+	private static void searchByKeyIndexFile() throws DatabaseException, IOException
 	{
 
-		// TODO Auto-generated method stub
+		searchByKey();
 		
 	}
 
@@ -151,7 +153,7 @@ public class Main {
 		DatabaseConfig dbConfig = new DatabaseConfig();
 		boolean input_err = true;
 		while(input_err) {
-			if (db_type.equals("btree")) {
+			if (db_type.equals("btree") || db_type.equals("indexfile")) {
 				dbConfig.setType(DatabaseType.BTREE);
 				input_err = false;
 				break;
@@ -159,8 +161,6 @@ public class Main {
 				dbConfig.setType(DatabaseType.HASH);
 				input_err = false;
 				break;
-			} else if (db_type.equals("indexfile")) {
-				System.out.println("Index File option not implemented yet");
 			} else {
 				System.out.println("Invalid Input, try again...");
 				continue;
@@ -173,6 +173,11 @@ public class Main {
 		System.out.println();
 		System.out.println("Populating database...");
 		populateDB(my_table,NO_RECORDS);
+		if(db_type.equals("indexfile")){
+			sec_table=new Database(INV_TABLE, null, dbConfig);
+			invertpopulateDB(sec_table, NO_RECORDS);
+			
+		}
 
 	}
 
@@ -207,7 +212,6 @@ public class Main {
 
 				// to print out the key/data pair
 				// System.out.println(s);	
-
 				/* to generate a data string */
 				range = 64 + random.nextInt( 64 );
 				s = "";
@@ -225,6 +229,60 @@ public class Main {
 				 * if the key does not exist in the database already
 				 */
 				my_table.putNoOverwrite(null, kdbt, ddbt);
+			}
+		}
+		catch (DatabaseException dbe) {
+			System.err.println("Populate the table: "+dbe.toString());
+			System.exit(1);
+		}
+
+	}
+	private static void invertpopulateDB(Database my_table, int numRecords) {
+		int range;
+		DatabaseEntry kdbt, ddbt;
+		String s;
+
+		/*  
+		 *  generate a random string with the length between 64 and 127,
+		 *  inclusive.
+		 *
+		 *  Seed the random number once and once only.
+		 */
+		Random random = new Random(1000000);
+		//System.out.println("Random Num: " + random);
+		try {
+			for (int i = 0; i < numRecords; i++) {
+
+				/* to generate a key string */
+				range = 64 + random.nextInt( 64 );
+				s = "";
+				for ( int j = 0; j < range; j++ ) 
+					s+=(new Character((char)(97+random.nextInt(26)))).toString();
+				//System.out.println("Key: " + s);
+
+				/* to create a DBT for key */
+				kdbt = new DatabaseEntry(s.getBytes());
+				kdbt.setSize(s.length()); 
+
+				// to print out the key/data pair
+				// System.out.println(s);	
+				/* to generate a data string */
+				range = 64 + random.nextInt( 64 );
+				s = "";
+				for ( int j = 0; j < range; j++ ) 
+					s+=(new Character((char)(97+random.nextInt(26)))).toString();
+				// to print out tfw.close();he key/data pair
+				//System.out.println("Data: " + s);	
+				// System.out.println("");
+
+				/* to create a DBT for data */
+				ddbt = new DatabaseEntry(s.getBytes());
+				ddbt.setSize(s.length()); 
+
+				/* to insert the key/data pair into the database 
+				 * if the key does not exist in the database already
+				 */
+				my_table.putNoOverwrite(null,ddbt,kdbt);
 			}
 		}
 		catch (DatabaseException dbe) {
