@@ -309,8 +309,10 @@ HEADinto the database
 			sec_table.remove(INV_TABLE, null, null);
 		}
 	}
-
-
+	public static boolean searchByKey() throws DatabaseException, IOException{
+		return searchByKey(my_table);
+	}
+	
 	// Search the Database using a Key
 	public static boolean searchByKey(Database my_table) throws DatabaseException, IOException {
 		boolean success = true;
