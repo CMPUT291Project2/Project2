@@ -85,7 +85,7 @@ public class Main {
 				if (db_type_option.equals("indexfile")) {
 					searchByKeyIndexFile();
 				} else {
-					searchByKey();
+					searchByKey(my_table);
 				}
 				break;
 			case 3:
@@ -95,7 +95,6 @@ public class Main {
 				} else if (db_type_option.equals("hash")){
 					searchByDataHash();
 				} else {
-					// TODO INDEXFILE Data Value Search
 					searchByDataIndexFile();
 				}
 				break;
@@ -127,45 +126,63 @@ public class Main {
 
 
 
-	private static void searchByKeyRangeIndexFile()
+	private static int searchByKeyRangeIndexFile() throws DatabaseException, IOException
 	{
-		/*
-		boolean success = true;
+
+		DatabaseEntry minKey = new DatabaseEntry();
+		DatabaseEntry maxKey = new DatabaseEntry();
 		DatabaseEntry key = new DatabaseEntry();
 		DatabaseEntry data = new DatabaseEntry();
+		DatabaseEntry datastart = new DatabaseEntry();
 
-		// Search for Keyword
-		String keyword =  System.console().readLine("Enter Key value to be searched: ");
+		Cursor cursor = sec_table.openCursor(null, null);
+
+		String minKeyword =  System.console().readLine("Enter minimum key: ");
 		System.console().printf("\n");
-		// String keyword = "upifbjzvdomrijhtvnmwyymfhglzhcsyxttdgjsqrzblznmireugvdamjcsvugqeyy";
-
-		key.setData(keyword.getBytes());
-		key.setSize(keyword.length());
+		String maxKeyword =  System.console().readLine("Enter maximum key: ");
+		System.console().printf("\n");
 		
+//		String minKeyword = "zydzqjcmmuklumwqehbphtpcubnoedzepzsgpivhlivbstrxyirjyfjmjbwkzaprlanyvvbtkztqmhdgjnudwnfaoivomxbzoajhmljejbxlwtqizppytbaqnhwiufs";
+//		String maxKeyword = "zyhfkxxoyezbprhyvpqtuocjhxunskhioctskyaacafhxdarseypgbzdmxyehqkpnedxgtsditwndxsqdbiahzxwmdgvhofaavgmezeyqjszvskmgnyafqpzubqafso";
+
+		minKey.setData(minKeyword.getBytes());
+		minKey.setSize(minKeyword.length());
+
+		maxKey.setData(maxKeyword.getBytes());
+		maxKey.setSize(maxKeyword.length());
+		my_table.get(null, minKey, datastart, LockMode.DEFAULT);
+
+		ArrayList<String> keyDataList = new ArrayList<String>();
+		int counter = 0;
+
 		// Start Timer
 		long startTime = System.currentTimeMillis();
 
-		OperationStatus op_status = my_table.get(null, key, data, LockMode.DEFAULT);
-		System.out.println("Search Status: " + op_status.toString());
-
-
-		op_status = my_table.get(null, key, data, LockMode.DEFAULT);
-
-		int counter = 0;
-		// Enters the matched key/data pair to an ArrayList to prepare for printing
-		// Also return a boolean for unit testing
-		ArrayList<String> keyDataList = new ArrayList<String>();
-		
-		if (op_status == OperationStatus.SUCCESS) {
-			String keyString = new String(key.getData());
-			String dataString = new String(data.getData());
-			// System.out.println("Key | Data : " + keyString + " | " + dataString + "");
-			keyDataList.add(keyString);
-			keyDataList.add(dataString);
+		if (cursor.getSearchKey(datastart, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+			String retKey = new String(data.getData());
+			String retData = new String(datastart.getData());
+			keyDataList.add(retKey);
+			keyDataList.add(retData);
+			System.out.println("Key | Data : " + retKey + " | " + retData + "");
 			counter++;
-			success = true;
-		} else {
-			success = false;
+			data = new DatabaseEntry();
+			while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS)
+			{
+				String keyString = new String(data.getData());
+				String dataString = new String(key.getData());
+				keyDataList.add(keyString);
+				keyDataList.add(dataString);
+				System.out.println("Key | Data : " + keyString + " | " + dataString + "");
+				counter++;
+				if (new String(data.getData()).compareTo(new String(maxKey.getData()))==0) {
+					System.out.println("Reached MAX KEY");
+					break;
+				}
+				if (counter > NO_RECORDS) {
+					System.out.println("OVERFLOW!");
+					return counter;
+				}
+			}
 		}
 		
 		// End Timer
@@ -174,18 +191,17 @@ public class Main {
 		System.out.println("Elapsed Time: " + elapsedTime + " ms");
 		printResult(file, keyDataList, elapsedTime);
 		System.out.println("Total Records Retrieved: " + counter);
-		return success;
-*/
+		return counter;
 	}
 
 	private static void searchByDataIndexFile() throws DatabaseException, IOException
 	{
-		searchByDataBTree();
+		searchByKey(sec_table);
 	}
 
 	private static void searchByKeyIndexFile() throws DatabaseException, IOException
 	{
-		searchByKey();
+		searchByKey(my_table);
 	}
 
 	// Select 1: Create and Populate Database
@@ -213,13 +229,10 @@ public class Main {
 		System.out.println("Database Type: " + dbConfig.getType().toString());
 		System.out.println();
 		System.out.println("Populating database...");
-		populateDB(my_table,NO_RECORDS);
 		if(db_type.equals("indexfile")){
 			sec_table=new Database(INV_TABLE, null, dbConfig);
-			invertpopulateDB(sec_table, NO_RECORDS);
-			
 		}
-
+		populateDB(my_table,NO_RECORDS);
 	}
 
 	// This populate database function is borrows from the provided java sample code
@@ -272,6 +285,9 @@ HEADinto the database
 				 * if the key does not exist in the database already
 				 */
 				my_table.putNoOverwrite(null, kdbt, ddbt);
+				if(db_type_option.equals("indexfile")){
+					sec_table.putNoOverwrite(null,ddbt,kdbt);
+				}
 			}
 		}
 		catch (DatabaseException dbe) {
@@ -280,60 +296,7 @@ HEADinto the database
 		}
 
 	}
-	private static void invertpopulateDB(Database my_table, int numRecords) {
-		int range;
-		DatabaseEntry kdbt, ddbt;
-		String s;
-
-		/*  
-		 *  generate a random string with the length between 64 and 127,
-		 *  inclusive.
-		 *
-		 *  Seed the random number once and once only.
-		 */
-		Random random = new Random(1000000);
-		//System.out.println("Random Num: " + random);
-		try {
-			for (int i = 0; i < numRecords; i++) {
-
-				/* to generate a key string */
-				range = 64 + random.nextInt( 64 );
-				s = "";
-				for ( int j = 0; j < range; j++ ) 
-					s+=(new Character((char)(97+random.nextInt(26)))).toString();
-				//System.out.println("Key: " + s);
-
-				/* to create a DBT for key */
-				kdbt = new DatabaseEntry(s.getBytes());
-				kdbt.setSize(s.length()); 
-
-				// to print out the key/data pair
-				// System.out.println(s);	
-				/* to generate a data string */
-				range = 64 + random.nextInt( 64 );
-				s = "";
-				for ( int j = 0; j < range; j++ ) 
-					s+=(new Character((char)(97+random.nextInt(26)))).toString();
-				// to print out tfw.close();he key/data pair
-				//System.out.println("Data: " + s);	
-				// System.out.println("");
-
-				/* to create a DBT for data */
-				ddbt = new DatabaseEntry(s.getBytes());
-				ddbt.setSize(s.length()); 
-
-				/* to insert the key/data pair into the database 
-				 * if the key does not exist in the database already
-				 */
-				my_table.putNoOverwrite(null,ddbt,kdbt);
-			}
-		}
-		catch (DatabaseException dbe) {
-			System.err.println("Populate the table: "+dbe.toString());
-			System.exit(1);
-		}
-
-	}
+	
 
 
 	public static void destroyDB() throws FileNotFoundException, DatabaseException {
@@ -349,7 +312,7 @@ HEADinto the database
 
 
 	// Search the Database using a Key
-	public static boolean searchByKey() throws DatabaseException, IOException {
+	public static boolean searchByKey(Database my_table) throws DatabaseException, IOException {
 		boolean success = true;
 		DatabaseEntry key = new DatabaseEntry();
 		DatabaseEntry data = new DatabaseEntry();
