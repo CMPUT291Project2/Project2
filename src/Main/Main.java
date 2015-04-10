@@ -6,8 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.Random;
 
 import com.sleepycat.db.Cursor;
@@ -25,14 +23,11 @@ import com.sleepycat.db.OperationStatus;
 
 public class Main {
 
-	// TODO: Finish Report
-	// TODO: Tabulate Results
-
 	/**
 	 * @param args
 	 */
-	private static final String DB_TABLE = "tmp/user_db/my_table";
-	private static final String INV_TABLE = "tmp/user_db/inv_table";
+	private static final String DB_TABLE = "tmp/edrick_db/my_table";
+	private static final String INV_TABLE = "tmp/edrick_db/inv_table";
 	private static final int NO_RECORDS = 100000;
 	private static String db_type_option;
 	private static Database my_table;
@@ -102,12 +97,10 @@ public class Main {
 				System.out.println("Retrieve Records with Given Range of Keys");
 				if (db_type_option.equals("btree")) {
 					searchByKeyRangeBTree();
-					// TODO
 				} else if (db_type_option.equals("hash")){
 					searchByKeyRangeHash();
 				} else {
-					// TODO INDEXFILE Range Search
-					searchByKeyRangeIndexFile();
+					searchByKeyRangeBTree();
 				}
 				break;
 			case 5:
@@ -115,6 +108,7 @@ public class Main {
 				destroyDB();
 				break;
 			case 6:
+				file.delete();
 				exit=true;
 				return;
 			default:
@@ -126,83 +120,7 @@ public class Main {
 
 
 
-	private static int searchByKeyRangeIndexFile() throws DatabaseException, IOException
-	{
-
-		DatabaseEntry minKey = new DatabaseEntry();
-		DatabaseEntry maxKey = new DatabaseEntry();
-		DatabaseEntry key = new DatabaseEntry();
-		DatabaseEntry data = new DatabaseEntry();
-		DatabaseEntry datastart = new DatabaseEntry();
-
-		Cursor cursor = sec_table.openCursor(null, null);
-
-		String minKeyword =  System.console().readLine("Enter minimum key: ");
-		System.console().printf("\n");
-		String maxKeyword =  System.console().readLine("Enter maximum key: ");
-		System.console().printf("\n");
-		
-//		String minKeyword = "zydzqjcmmuklumwqehbphtpcubnoedzepzsgpivhlivbstrxyirjyfjmjbwkzaprlanyvvbtkztqmhdgjnudwnfaoivomxbzoajhmljejbxlwtqizppytbaqnhwiufs";
-//		String maxKeyword = "zyhfkxxoyezbprhyvpqtuocjhxunskhioctskyaacafhxdarseypgbzdmxyehqkpnedxgtsditwndxsqdbiahzxwmdgvhofaavgmezeyqjszvskmgnyafqpzubqafso";
-
-		minKey.setData(minKeyword.getBytes());
-		minKey.setSize(minKeyword.length());
-
-		maxKey.setData(maxKeyword.getBytes());
-		maxKey.setSize(maxKeyword.length());
-		my_table.get(null, minKey, datastart, LockMode.DEFAULT);
-
-		ArrayList<String> keyDataList = new ArrayList<String>();
-		int counter = 0;
-
-		// Start Timer
-		long startTime = System.currentTimeMillis();
-
-		if (cursor.getSearchKey(datastart, data, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-			String retKey = new String(data.getData());
-			String retData = new String(datastart.getData());
-			keyDataList.add(retKey);
-			keyDataList.add(retData);
-			System.out.println("Key | Data : " + retKey + " | " + retData + "");
-			counter++;
-			data = new DatabaseEntry();
-			while (cursor.getNext(key, data, LockMode.DEFAULT) == OperationStatus.SUCCESS)
-			{
-				String keyString = new String(data.getData());
-				String dataString = new String(key.getData());
-				keyDataList.add(keyString);
-				keyDataList.add(dataString);
-				System.out.println("Key | Data : " + keyString + " | " + dataString + "");
-				counter++;
-				if (new String(data.getData()).compareTo(new String(maxKey.getData()))==0) {
-					System.out.println("Reached MAX KEY");
-					break;
-				}
-				if (counter > NO_RECORDS) {
-					System.out.println("OVERFLOW!");
-					return counter;
-				}
-			}
-		}
-		
-		// End Timer
-		long endTime = System.currentTimeMillis();
-		long elapsedTime = (endTime - startTime);
-		System.out.println("Elapsed Time: " + elapsedTime + " ms");
-		printResult(file, keyDataList, elapsedTime);
-		System.out.println("Total Records Retrieved: " + counter);
-		return counter;
-	}
-
-	private static void searchByDataIndexFile() throws DatabaseException, IOException
-	{
-		searchByKey(sec_table);
-	}
-
-	private static void searchByKeyIndexFile() throws DatabaseException, IOException
-	{
-		searchByKey(my_table);
-	}
+	
 
 	// Select 1: Create and Populate Database
 	public static void createPopulateDB(String db_type) throws FileNotFoundException, DatabaseException {
@@ -298,7 +216,6 @@ HEADinto the database
 	}
 	
 
-
 	public static void destroyDB() throws FileNotFoundException, DatabaseException {
 		/* close the database and the database environment */
 		my_table.close();
@@ -344,7 +261,7 @@ HEADinto the database
 		if (op_status == OperationStatus.SUCCESS) {
 			String keyString = new String(key.getData());
 			String dataString = new String(data.getData());
-			// System.out.println("Key | Data : " + keyString + " | " + dataString + "");
+			System.out.println("Key | Data : " + keyString + " | " + dataString + "");
 			keyDataList.add(keyString);
 			keyDataList.add(dataString);
 			counter++;
@@ -371,7 +288,7 @@ HEADinto the database
 		String dataword =  System.console().readLine("Enter Data value to be searched: ");
 		System.console().printf("\n");
 		
-		// String dataword = "pmvndcccadcmvjijvcibttitcjvkrgtysvyrthbofxafnntddtgrehfudcyxybzlokplrturvzymryjshclxgryatxdotiainbpgzbynuyecxbqrvoq";
+//		 String dataword = "pmvndcccadcmvjijvcibttitcjvkrgtysvyrthbofxafnntddtgrehfudcyxybzlokplrturvzymryjshclxgryatxdotiainbpgzbynuyecxbqrvoq";
 		
 		DatabaseEntry givenData = new DatabaseEntry(dataword.getBytes());
 		givenData.setSize(dataword.length());
@@ -391,7 +308,7 @@ HEADinto the database
 			String keyString = new String(key.getData());
 			String dataString = new String(data.getData());
 			if (givenData.equals(data)) {
-				// System.out.println("Key | Data : " + keyString + " | " + dataString + "");
+				System.out.println("Key | Data : " + keyString + " | " + dataString + "");
 				keyDataList.add(keyString);
 				keyDataList.add(dataString);
 				counter++;
@@ -432,7 +349,7 @@ HEADinto the database
 			String keyString = new String(key.getData());
 			String dataString = new String(data.getData());
 			if (givenData.equals(data)) {
-				//System.out.println("Key | Data : " + keyString + " | " + dataString + "");
+				System.out.println("Key | Data : " + keyString + " | " + dataString + "");
 				keyDataList.add(keyString);
 				keyDataList.add(dataString);
 				counter++;
@@ -517,6 +434,9 @@ HEADinto the database
 //		String minKeyword = "zydzqjcmmuklumwqehbphtpcubnoedzepzsgpivhlivbstrxyirjyfjmjbwkzaprlanyvvbtkztqmhdgjnudwnfaoivomxbzoajhmljejbxlwtqizppytbaqnhwiufs";
 //		String maxKeyword = "zyhfkxxoyezbprhyvpqtuocjhxunskhioctskyaacafhxdarseypgbzdmxyehqkpnedxgtsditwndxsqdbiahzxwmdgvhofaavgmezeyqjszvskmgnyafqpzubqafso";
 
+//		String minKeyword = "zydtbdklhlwrwnmwbrnputitwcwpbkocbmwofpbgxtcnstjkewrjjmjmbzdojyoztthpzjeykztqmhdgjnudwnfaoivomxbzoajhmljejbxlwtqizppytbaqnhwiufs";
+//		String maxKeyword = "zzzzevhwlhknxjmuxosuaunkzvqaynhihjpryfhwzziekyjpwhtsffnvywrrcwpxpmavfbqzwbxwkwwodfxiwcxsvkfznsgymytctmjleuxohjezlyeodccqletvfvg";
+		
 		minKey.setData(minKeyword.getBytes());
 		minKey.setSize(minKeyword.length());
 
@@ -564,6 +484,15 @@ HEADinto the database
 		return counter;
 	}
 
+	private static void searchByDataIndexFile() throws DatabaseException, IOException
+	{
+		searchByKey(sec_table);
+	}
+
+	private static void searchByKeyIndexFile() throws DatabaseException, IOException
+	{
+		searchByKey(my_table);
+	}
 
 	public static void printResult(File file, ArrayList<String> keyDataList, long elapsedTime) throws IOException {
 		FileWriter fw = new FileWriter(file.getName(),true);
